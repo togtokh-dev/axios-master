@@ -1,6 +1,6 @@
 {
   "name": "axios-master",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "axios response time startus log",
   "main": "index.ts",
   "scripts": {
