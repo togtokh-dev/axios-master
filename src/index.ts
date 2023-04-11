@@ -1,5 +1,6 @@
 import axios from "axios";
-import https from "https";
+import * as https from "https";
+//import https from "https";
 export default async (
   name?: any,
   log?: boolean,
