@@ -1,7 +1,7 @@
 {
   "name": "axios-master",
   "version": "1.0.5",
-  "description": "axios response time startus log",
+  "description": "axios response time status log",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
   "files": [
