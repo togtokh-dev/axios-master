@@ -1,7 +1,6 @@
 import axios from "axios";
 import * as https from "https";
-//import https from "https";
-export default async (
+export const axiosMaster = async (
   name?: any,
   log?: boolean,
   default_config?: any,
@@ -43,3 +42,4 @@ export default async (
     return Promise.reject(error?.response?.data);
   }
 };
+export default axiosMaster;

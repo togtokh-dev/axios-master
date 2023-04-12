@@ -9,10 +9,10 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
     });
 };
 Object.defineProperty(exports, "__esModule", { value: true });
+exports.axiosMaster = void 0;
 const axios_1 = require("axios");
 const https = require("https");
-//import https from "https";
-exports.default = (name, log, default_config, time) => __awaiter(void 0, void 0, void 0, function* () {
+const axiosMaster = (name, log, default_config, time) => __awaiter(void 0, void 0, void 0, function* () {
     var _a, _b;
     const httpsAgent = new https.Agent({
         rejectUnauthorized: false,
@@ -47,3 +47,5 @@ exports.default = (name, log, default_config, time) => __awaiter(void 0, void 0,
         return Promise.reject((_b = error === null || error === void 0 ? void 0 : error.response) === null || _b === void 0 ? void 0 : _b.data);
     }
 });
+exports.axiosMaster = axiosMaster;
+exports.default = exports.axiosMaster;
