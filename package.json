@@ -1,6 +1,6 @@
 {
   "name": "axios-master",
-  "version": "1.0.4",
+  "version": "1.0.5",
   "description": "axios response time startus log",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
@@ -15,7 +15,11 @@
     "url": "git+https://github.com/togtokh-dev/axios-master.git"
   },
   "keywords": [
-    "TOGTOKH"
+    "TOGTOKH",
+    "axios",
+    "3rd log",
+    "axios-log",
+    "response time log"
   ],
   "author": "TOGTOKH.DEV",
   "license": "ISC",
