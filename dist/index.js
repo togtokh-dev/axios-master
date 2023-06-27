@@ -9,43 +9,156 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
     });
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.axiosMaster = void 0;
-const axios_1 = require("axios");
-const https = require("https");
-const axiosMaster = (name, log, default_config, time) => __awaiter(void 0, void 0, void 0, function* () {
-    var _a, _b;
-    const httpsAgent = new https.Agent({
-        rejectUnauthorized: false,
-    });
-    const config = Object.assign({
-        timeout: time ? time : 20 * 1000,
-        httpsAgent: httpsAgent,
-    }, default_config);
-    const startTime = Date.now();
-    let timer = 0;
-    const interval = setInterval(function () {
-        const elapsedTime = Date.now() - startTime;
-        timer = (elapsedTime / 1000).toFixed(5);
-    }, 1);
+const jsonwebtoken_1 = require("jsonwebtoken");
+const config = {
+    keys: {
+        TestToken: "tokenkey-1",
+    },
+};
+const create = ({ data, expiresIn, keyName }) => __awaiter(void 0, void 0, void 0, function* () {
     try {
-        const response = yield (0, axios_1.default)(config);
-        clearInterval(interval);
-        console.log("\x1b[32m", ": resolve");
-        console.log("\x1b[33m", `${name ? name : config.url} => ${timer} s :`);
-        if (log) {
-            console.log(response === null || response === void 0 ? void 0 : response.data);
+        if (config.keys[keyName] == undefined) {
+            throw "Key undefined";
         }
-        console.log("\x1b[32m", ": resolve");
-        return Promise.resolve(response === null || response === void 0 ? void 0 : response.data);
+        const JWT_KEY = config.keys[keyName];
+        const jsontoken = yield (0, jsonwebtoken_1.sign)({ authMaster: data }, JWT_KEY, {
+            expiresIn: expiresIn,
+        });
+        return Promise.resolve({
+            success: true,
+            message: "success",
+            data: jsontoken,
+        });
     }
     catch (error) {
-        clearInterval(interval);
-        console.log("\x1b[35m", ": reject");
-        console.log("\x1b[33m", `${name ? name : config.url} => ${timer} s :`);
-        console.log((_a = error === null || error === void 0 ? void 0 : error.response) === null || _a === void 0 ? void 0 : _a.data);
-        console.log("\x1b[35m", ": reject");
-        return Promise.reject((_b = error === null || error === void 0 ? void 0 : error.response) === null || _b === void 0 ? void 0 : _b.data);
+        return Promise.resolve({
+            success: false,
+            message: error,
+            data: null,
+        });
     }
 });
-exports.axiosMaster = axiosMaster;
-exports.default = exports.axiosMaster;
+const checker = ({ token, keyName }) => __awaiter(void 0, void 0, void 0, function* () {
+    try {
+        if (config.keys[keyName] == undefined) {
+            throw "Key undefined";
+        }
+        const JWT_KEY = config.keys[keyName];
+        const decoded = yield (0, jsonwebtoken_1.verify)(token, JWT_KEY);
+        return Promise.resolve({
+            success: true,
+            message: "success",
+            data: decoded,
+        });
+    }
+    catch (error) {
+        return Promise.resolve({
+            success: false,
+            message: error,
+            data: null,
+        });
+    }
+});
+const basic = (token) => __awaiter(void 0, void 0, void 0, function* () {
+    try {
+        const token_auth = token === null || token === void 0 ? void 0 : token.split(" ");
+        if (token_auth[0] == "Basic") {
+            const token = yield Buffer.from(token_auth[1], "base64").toString();
+            return {
+                success: true,
+                data: {
+                    username: token.split(":")[0],
+                    password: token.split(":")[1],
+                },
+            };
+        }
+        return {
+            success: false,
+            data: null,
+        };
+    }
+    catch (error) {
+        return {
+            success: false,
+            data: null,
+        };
+    }
+});
+const checkTokenBearer = (users, options) => {
+    return (req, res, next) => __awaiter(void 0, void 0, void 0, function* () {
+        try {
+            const token_auth = req === null || req === void 0 ? void 0 : req.get("authorization");
+            const token_cookie = req === null || req === void 0 ? void 0 : req.cookies.token;
+            let token = undefined;
+            if (token_auth) {
+                token = token_auth;
+                token = token === null || token === void 0 ? void 0 : token.slice(7);
+            }
+            else if (token_cookie) {
+                token = token_cookie;
+            }
+            for (let index = 0; index < users.length; index++) {
+                const user = users[index];
+                const result = yield checker({
+                    token: token,
+                    keyName: user,
+                });
+                if (result.success) {
+                    req.authMaster = result.data.authMaster;
+                    req._id = result.data.authMaster._id;
+                    req.user_id = result.data.authMaster.user_id;
+                    req.role = result.data.authMaster.user_role;
+                    req.user = result.data.authMaster.result;
+                    req.tokenUser = user;
+                    req.token = token;
+                    next();
+                }
+            }
+            if ((options === null || options === void 0 ? void 0 : options.required) == true) {
+                return res.status(400).json({
+                    success: false,
+                    message: "Нэвтрэх шаардлагатай",
+                });
+            }
+            else {
+                next();
+            }
+        }
+        catch (error) {
+            return res.status(400).json({
+                success: false,
+                message: "Нэвтрэх шаардлагатай",
+            });
+        }
+    });
+};
+const checkTokenBasic = ({ required }) => {
+    return (req, res, next) => __awaiter(void 0, void 0, void 0, function* () {
+        const token_auth = req.get("authorization");
+        const token_cookie = req.cookies.token;
+        let token = undefined;
+        if (token_auth) {
+            token = token_auth;
+            token = token.slice(7);
+        }
+        else if (token_cookie) {
+            token = token_cookie;
+        }
+        const result = yield basic(token);
+        if (result.success) {
+            req.authMaster = result.data;
+            req.tokenUser = "basicToken";
+            next();
+        }
+        else if (required) {
+            return res.status(400).json({
+                success: false,
+                message: "Нэвтрэх шаардлагатай",
+            });
+        }
+        else {
+            next();
+        }
+    });
+};
+exports.default = { create, checker, config, checkTokenBearer, checkTokenBasic };
