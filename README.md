@@ -1,19 +1,23 @@
-# Auth Master
+# Axios Master
 
 ## Example
 
 ```bash
-    import authMaster from "auth-master";
-    authMaster.config.keys.adminToken = "123";
+  import axiosMaster from "axios-master";
     async function name() {
-      const token = await authMaster.create({
-        data: { user_name: "" },
-        expiresIn: "1D",
-        keyName: "adminToken",
-      });
-      console.log(token);
+        try {
+            const result = await axiosMaster("SMS", false, {
+            method: "GET",
+            url: encodeURI(`https://api2.togtokh.dev/main/user/`),
+            headers: {
+                "Content-Type": "application/json",
+            },
+            });
+            console.log(result);
+        } catch (error) {
+            console.log(error);
+        }
     }
     name();
-
 
 ```
