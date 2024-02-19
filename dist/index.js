@@ -97,7 +97,7 @@ const axiosMasterLogger = (default_config, masterConfig) => __awaiter(void 0, vo
                 message: `API -> ${masterConfig.name ? masterConfig.name : config.url}`,
                 json: {
                     time: timer,
-                    request: config,
+                    request: JSON.stringify(config),
                     response: response_log,
                 },
             });
