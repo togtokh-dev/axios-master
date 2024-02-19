@@ -123,7 +123,7 @@ export const axiosMasterLogger = async (
         message: `API -> ${masterConfig.name ? masterConfig.name : config.url}`,
         json: {
           time: timer,
-          request: JSON.stringify(config),
+          request: default_config,
           response: response_log,
         },
       });
