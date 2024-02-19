@@ -1,6 +1,6 @@
 {
   "name": "axios-master",
-  "version": "1.0.6",
+  "version": "1.0.7",
   "description": "axios response time status log",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
@@ -8,7 +8,9 @@
     "dist/"
   ],
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "build-ts": "npx tsc",
+    "build": "npx tsc"
   },
   "repository": {
     "type": "git",
