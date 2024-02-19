@@ -118,7 +118,7 @@ export const axiosMasterLogger = async (
     return Promise.reject(error?.response?.data);
   } finally {
     try {
-      masterConfig.logger({
+      masterConfig?.logger({
         log_levels: "WARN",
         message: `API -> ${masterConfig.name ? masterConfig.name : config.url}`,
         json: {

@@ -92,7 +92,7 @@ const axiosMasterLogger = (default_config, masterConfig) => __awaiter(void 0, vo
     }
     finally {
         try {
-            masterConfig.logger({
+            masterConfig === null || masterConfig === void 0 ? void 0 : masterConfig.logger({
                 log_levels: "WARN",
                 message: `API -> ${masterConfig.name ? masterConfig.name : config.url}`,
                 json: {
