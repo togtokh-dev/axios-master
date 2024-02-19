@@ -102,7 +102,9 @@ const axiosMasterLogger = (default_config, masterConfig) => __awaiter(void 0, vo
                 },
             });
         }
-        catch (error) { }
+        catch (error) {
+            console.log(error);
+        }
     }
 });
 exports.axiosMasterLogger = axiosMasterLogger;

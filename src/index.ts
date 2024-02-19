@@ -127,7 +127,9 @@ export const axiosMasterLogger = async (
           response: response_log,
         },
       });
-    } catch (error) {}
+    } catch (error) {
+      console.log(error);
+    }
   }
 };
 export default axiosMaster;
