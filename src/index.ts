@@ -1,15 +1,36 @@
-import axios, { AxiosRequestConfig } from "axios";
+import axios, { AxiosRequestConfig, AxiosResponse, AxiosError } from "axios";
 import * as https from "https";
+interface MasterConfig {
+  name?: string;
+  log?: boolean;
+  timeout?: number;
+  logger?: (data: {
+    log_levels:
+      | "DEBUG"
+      | "INFO"
+      | "WARN"
+      | "ERROR"
+      | "CRITICAL"
+      | "TRACE"
+      | string;
+    message: string;
+    json: Object;
+  }) => void;
+  retry?: boolean;
+  shouldRetry?: boolean;
+  shouldRetryStatus?: number;
+  retryFunction?: () => Promise<void>;
+}
 export const axiosMaster = async (
-  name?: any,
+  name?: string | number,
   log?: boolean,
   default_config?: any,
-  time?: any
+  time?: number | string
 ) => {
   const httpsAgent = new https.Agent({
     rejectUnauthorized: false,
   });
-  const config = {
+  const config: AxiosRequestConfig = {
     ...{
       timeout: time ? time : 20 * 1000,
       httpsAgent: httpsAgent,
@@ -73,7 +94,7 @@ export const axiosMasterLogger = async (
     ...default_config,
   };
   const startTime = Date.now();
-  let timer: any = 0;
+  let timer: number | string = 0;
   const interval = setInterval(function () {
     const elapsedTime = Date.now() - startTime;
     timer = (elapsedTime / 1000).toFixed(5);
@@ -88,7 +109,7 @@ export const axiosMasterLogger = async (
     | "CRITICAL"
     | "TRACE" = "INFO";
   try {
-    const response: any = await axios(config);
+    const response = await axios(config);
     clearInterval(interval);
     console.log("\x1b[32m", ": resolve");
     console.log(
@@ -132,4 +153,113 @@ export const axiosMasterLogger = async (
     }
   }
 };
+
+export const axiosMasterMain = async (
+  default_config: AxiosRequestConfig,
+  masterConfig: MasterConfig
+): Promise<any> => {
+  const httpsAgent = new https.Agent({
+    rejectUnauthorized: false,
+  });
+  const config: AxiosRequestConfig = {
+    timeout: masterConfig.timeout || 20000,
+    httpsAgent: httpsAgent,
+    ...default_config,
+  };
+
+  const startTime = Date.now();
+  let timer: number = 0;
+  const interval = setInterval(() => {
+    const elapsedTime = Date.now() - startTime;
+    timer = parseFloat((elapsedTime / 1000).toFixed(5));
+  }, 1);
+
+  const log = (level: string, message: string, data: Object) => {
+    if (masterConfig.logger) {
+      masterConfig.logger({
+        log_levels: level,
+        message: message,
+        json: data,
+      });
+    }
+  };
+
+  const makeRequest = async (): Promise<AxiosResponse> => {
+    try {
+      const response = await axios(config);
+      clearInterval(interval);
+      console.log("\x1b[32m", ": resolve");
+      console.log(
+        "\x1b[33m",
+        `${masterConfig.name || config.url} => ${timer} s :`
+      );
+      if (masterConfig.log) {
+        console.log(response);
+      }
+      console.log("\x1b[32m", ": resolve");
+      return response;
+    } catch (error) {
+      clearInterval(interval);
+      if (masterConfig.log) {
+        console.log(error);
+      }
+      console.log("\x1b[35m", ": reject");
+      console.log(
+        "\x1b[33m",
+        `${masterConfig.name || config.url} => ${timer} s :`
+      );
+      if (error instanceof AxiosError && error.response) {
+        console.log(error.response.data);
+      }
+      console.log("\x1b[35m", ": reject");
+      throw error;
+    }
+  };
+
+  try {
+    const response = await makeRequest();
+    log("INFO", `API -> ${masterConfig.name || config.url}`, {
+      time: timer,
+      request: default_config,
+      response: response.data,
+    });
+    return response.data;
+  } catch (error) {
+    if (
+      error instanceof AxiosError &&
+      error.response?.status === masterConfig.shouldRetryStatus &&
+      masterConfig.shouldRetry
+    ) {
+      try {
+        if (masterConfig.retryFunction) {
+          await masterConfig.retryFunction();
+        }
+        const retryResponse = await makeRequest();
+        log("INFO", `API -> ${masterConfig.name || config.url}`, {
+          time: timer,
+          request: default_config,
+          response: retryResponse.data,
+        });
+        return retryResponse.data;
+      } catch (retryError) {
+        log("WARN", `Retry API -> ${masterConfig.name || config.url} failed`, {
+          time: timer,
+          request: default_config,
+          response: retryError,
+        });
+        return Promise.reject(retryError?.response?.data);
+      }
+    } else {
+      log("WARN", `API -> ${masterConfig.name || config.url} failed`, {
+        time: timer,
+        request: default_config,
+        response: error,
+      });
+      return Promise.reject(error?.response?.data);
+    }
+  } finally {
+    clearInterval(interval);
+  }
+};
+
 export default axiosMaster;

@@ -9,7 +9,7 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
     });
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.axiosMasterLogger = exports.axiosMaster = void 0;
+exports.axiosMasterMain = exports.axiosMasterLogger = exports.axiosMaster = void 0;
 const axios_1 = require("axios");
 const https = require("https");
 const axiosMaster = (name, log, default_config, time) => __awaiter(void 0, void 0, void 0, function* () {
@@ -108,4 +108,99 @@ const axiosMasterLogger = (default_config, masterConfig) => __awaiter(void 0, vo
     }
 });
 exports.axiosMasterLogger = axiosMasterLogger;
+const axiosMasterMain = (default_config, masterConfig) => __awaiter(void 0, void 0, void 0, function* () {
+    var _e, _f, _g;
+    const httpsAgent = new https.Agent({
+        rejectUnauthorized: false,
+    });
+    const config = Object.assign({ timeout: masterConfig.timeout || 20000, httpsAgent: httpsAgent }, default_config);
+    const startTime = Date.now();
+    let timer = 0;
+    const interval = setInterval(() => {
+        const elapsedTime = Date.now() - startTime;
+        timer = parseFloat((elapsedTime / 1000).toFixed(5));
+    }, 1);
+    const log = (level, message, data) => {
+        if (masterConfig.logger) {
+            masterConfig.logger({
+                log_levels: level,
+                message: message,
+                json: data,
+            });
+        }
+    };
+    const makeRequest = () => __awaiter(void 0, void 0, void 0, function* () {
+        try {
+            const response = yield (0, axios_1.default)(config);
+            clearInterval(interval);
+            console.log("\x1b[32m", ": resolve");
+            console.log("\x1b[33m", `${masterConfig.name || config.url} => ${timer} s :`);
+            if (masterConfig.log) {
+                console.log(response);
+            }
+            console.log("\x1b[32m", ": resolve");
+            return response;
+        }
+        catch (error) {
+            clearInterval(interval);
+            if (masterConfig.log) {
+                console.log(error);
+            }
+            console.log("\x1b[35m", ": reject");
+            console.log("\x1b[33m", `${masterConfig.name || config.url} => ${timer} s :`);
+            if (error instanceof axios_1.AxiosError && error.response) {
+                console.log(error.response.data);
+            }
+            console.log("\x1b[35m", ": reject");
+            throw error;
+        }
+    });
+    try {
+        const response = yield makeRequest();
+        log("INFO", `API -> ${masterConfig.name || config.url}`, {
+            time: timer,
+            request: default_config,
+            response: response.data,
+        });
+        return response.data;
+    }
+    catch (error) {
+        if (error instanceof axios_1.AxiosError &&
+            ((_e = error.response) === null || _e === void 0 ? void 0 : _e.status) === masterConfig.shouldRetryStatus &&
+            masterConfig.shouldRetry) {
+            try {
+                if (masterConfig.retryFunction) {
+                    yield masterConfig.retryFunction();
+                }
+                const retryResponse = yield makeRequest();
+                log("INFO", `API -> ${masterConfig.name || config.url}`, {
+                    time: timer,
+                    request: default_config,
+                    response: retryResponse.data,
+                });
+                return retryResponse.data;
+            }
+            catch (retryError) {
+                log("WARN", `Retry API -> ${masterConfig.name || config.url} failed`, {
+                    time: timer,
+                    request: default_config,
+                    response: retryError,
+                });
+                return Promise.reject((_f = retryError === null || retryError === void 0 ? void 0 : retryError.response) === null || _f === void 0 ? void 0 : _f.data);
+            }
+        }
+        else {
+            log("WARN", `API -> ${masterConfig.name || config.url} failed`, {
+                time: timer,
+                request: default_config,
+                response: error,
+            });
+            return Promise.reject((_g = error === null || error === void 0 ? void 0 : error.response) === null || _g === void 0 ? void 0 : _g.data);
+        }
+    }
+    finally {
+        clearInterval(interval);
+    }
+});
+exports.axiosMasterMain = axiosMasterMain;
 exports.default = exports.axiosMaster;
