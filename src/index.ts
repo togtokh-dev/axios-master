@@ -19,7 +19,7 @@ interface MasterConfig {
   retry?: boolean;
   shouldRetry?: boolean;
   shouldRetryStatus?: number;
-  retryFunction?: () => Promise<void>;
+  retryFunction?: () => Promise<string>;
 }
 export const axiosMaster = async (
   name?: string | number,
@@ -232,7 +232,8 @@ export const axiosMasterMain = async (
     ) {
       try {
         if (masterConfig.retryFunction) {
-          await masterConfig.retryFunction();
+          const token = await masterConfig.retryFunction();
+          config.headers.Authorization = `Bearer ${token}`;
         }
         const retryResponse = await makeRequest();
         log("INFO", `API -> ${masterConfig.name || config.url}`, {

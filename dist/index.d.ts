@@ -11,7 +11,7 @@ interface MasterConfig {
     retry?: boolean;
     shouldRetry?: boolean;
     shouldRetryStatus?: number;
-    retryFunction?: () => Promise<void>;
+    retryFunction?: () => Promise<string>;
 }
 export declare const axiosMaster: (name?: string | number, log?: boolean, default_config?: any, time?: number | string) => Promise<any>;
 export declare const axiosMasterLogger: (default_config: AxiosRequestConfig, masterConfig: {

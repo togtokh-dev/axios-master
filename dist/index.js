@@ -170,7 +170,8 @@ const axiosMasterMain = (default_config, masterConfig) => __awaiter(void 0, void
             masterConfig.shouldRetry) {
             try {
                 if (masterConfig.retryFunction) {
-                    yield masterConfig.retryFunction();
+                    const token = yield masterConfig.retryFunction();
+                    config.headers.Authorization = `Bearer ${token}`;
                 }
                 const retryResponse = yield makeRequest();
                 log("INFO", `API -> ${masterConfig.name || config.url}`, {
