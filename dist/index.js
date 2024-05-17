@@ -166,7 +166,7 @@ const axiosMasterMain = (default_config, masterConfig) => __awaiter(void 0, void
     }
     catch (error) {
         if (error instanceof axios_1.AxiosError &&
-            ((_e = error.response) === null || _e === void 0 ? void 0 : _e.status) === masterConfig.shouldRetryStatus &&
+            masterConfig.shouldRetryStatus.includes((_e = error.response) === null || _e === void 0 ? void 0 : _e.status) &&
             masterConfig.shouldRetry) {
             try {
                 if (masterConfig.retryFunction) {

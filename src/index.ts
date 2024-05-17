@@ -18,7 +18,7 @@ interface MasterConfig {
   }) => void;
   retry?: boolean;
   shouldRetry?: boolean;
-  shouldRetryStatus?: number;
+  shouldRetryStatus?: number[];
   retryFunction?: () => Promise<string>;
 }
 export const axiosMaster = async (
@@ -227,7 +227,7 @@ export const axiosMasterMain = async (
   } catch (error) {
     if (
       error instanceof AxiosError &&
-      error.response?.status === masterConfig.shouldRetryStatus &&
+      masterConfig.shouldRetryStatus.includes(error.response?.status) &&
       masterConfig.shouldRetry
     ) {
       try {
