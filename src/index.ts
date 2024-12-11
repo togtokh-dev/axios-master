@@ -16,7 +16,6 @@ interface MasterConfig {
     message: string;
     json: Object;
   }) => void;
-  retry?: boolean;
   shouldRetry?: boolean;
   shouldRetryStatus?: number[];
   retryFunction?: () => Promise<string>;
@@ -157,7 +156,7 @@ export const axiosMasterLogger = async (
 export const axiosMasterMain = async (
   default_config: AxiosRequestConfig,
   masterConfig: MasterConfig
-): Promise<any> => {
+): Promise<AxiosResponse | any> => {
   const httpsAgent = new https.Agent({
     rejectUnauthorized: false,
   });
@@ -227,7 +226,7 @@ export const axiosMasterMain = async (
   } catch (error) {
     if (
       error instanceof AxiosError &&
-      masterConfig.shouldRetryStatus.includes(error.response?.status) &&
+      masterConfig.shouldRetryStatus?.includes(error.response?.status) &&
       masterConfig.shouldRetry
     ) {
       try {
@@ -256,7 +255,7 @@ export const axiosMasterMain = async (
         request: default_config,
         response: error,
       });
-      return Promise.reject(error?.response?.data);
+      return Promise.reject(error?.response);
     }
   } finally {
     clearInterval(interval);

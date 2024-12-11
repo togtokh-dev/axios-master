@@ -166,7 +166,7 @@ const axiosMasterMain = (default_config, masterConfig) => __awaiter(void 0, void
     }
     catch (error) {
         if (error instanceof axios_1.AxiosError &&
-            masterConfig.shouldRetryStatus.includes((_e = error.response) === null || _e === void 0 ? void 0 : _e.status) &&
+            ((_e = masterConfig.shouldRetryStatus) === null || _e === void 0 ? void 0 : _e.includes((_f = error.response) === null || _f === void 0 ? void 0 : _f.status)) &&
             masterConfig.shouldRetry) {
             try {
                 if (masterConfig.retryFunction) {
@@ -187,7 +187,7 @@ const axiosMasterMain = (default_config, masterConfig) => __awaiter(void 0, void
                     request: default_config,
                     response: retryError,
                 });
-                return Promise.reject((_f = retryError === null || retryError === void 0 ? void 0 : retryError.response) === null || _f === void 0 ? void 0 : _f.data);
+                return Promise.reject((_g = retryError === null || retryError === void 0 ? void 0 : retryError.response) === null || _g === void 0 ? void 0 : _g.data);
             }
         }
         else {
@@ -196,7 +196,7 @@ const axiosMasterMain = (default_config, masterConfig) => __awaiter(void 0, void
                 request: default_config,
                 response: error,
             });
-            return Promise.reject((_g = error === null || error === void 0 ? void 0 : error.response) === null || _g === void 0 ? void 0 : _g.data);
+            return Promise.reject(error === null || error === void 0 ? void 0 : error.response);
         }
     }
     finally {
