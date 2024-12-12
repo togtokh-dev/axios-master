@@ -167,11 +167,6 @@ export const axiosMasterMain = async (
   };
 
   const startTime = Date.now();
-  let timer: number = 0;
-  const interval = setInterval(() => {
-    const elapsedTime = Date.now() - startTime;
-    timer = parseFloat((elapsedTime / 1000).toFixed(5));
-  }, 1);
 
   const log = (level: string, message: string, data: Object) => {
     if (masterConfig.logger) {
@@ -186,11 +181,13 @@ export const axiosMasterMain = async (
   const makeRequest = async (): Promise<AxiosResponse> => {
     try {
       const response = await axios(config);
-      clearInterval(interval);
+      const elapsedTime = parseFloat(
+        ((Date.now() - startTime) / 1000).toFixed(5)
+      );
       console.log("\x1b[32m", ": resolve");
       console.log(
         "\x1b[33m",
-        `${masterConfig.name || config.url} => ${timer} s :`
+        `${masterConfig.name || config.url} => ${elapsedTime} s :`
       );
       if (masterConfig.log) {
         console.log(response);
@@ -198,14 +195,16 @@ export const axiosMasterMain = async (
       console.log("\x1b[32m", ": resolve");
       return response;
     } catch (error) {
-      clearInterval(interval);
+      const elapsedTime = parseFloat(
+        ((Date.now() - startTime) / 1000).toFixed(5)
+      );
       if (masterConfig.log) {
         console.log(error);
       }
       console.log("\x1b[35m", ": reject");
       console.log(
         "\x1b[33m",
-        `${masterConfig.name || config.url} => ${timer} s :`
+        `${masterConfig.name || config.url} => ${elapsedTime} s :`
       );
       if (error instanceof AxiosError && error.response) {
         console.log(error.response.data);
@@ -218,7 +217,7 @@ export const axiosMasterMain = async (
   try {
     const response = await makeRequest();
     log("INFO", `API -> ${masterConfig.name || config.url}`, {
-      time: timer,
+      time: parseFloat(((Date.now() - startTime) / 1000).toFixed(5)),
       request: default_config,
       response: response.data,
     });
@@ -236,14 +235,14 @@ export const axiosMasterMain = async (
         }
         const retryResponse = await makeRequest();
         log("INFO", `API -> ${masterConfig.name || config.url}`, {
-          time: timer,
+          time: parseFloat(((Date.now() - startTime) / 1000).toFixed(5)),
           request: default_config,
           response: retryResponse.data,
         });
         return retryResponse.data;
       } catch (retryError) {
         log("WARN", `Retry API -> ${masterConfig.name || config.url} failed`, {
-          time: timer,
+          time: parseFloat(((Date.now() - startTime) / 1000).toFixed(5)),
           request: default_config,
           response: retryError,
         });
@@ -251,14 +250,12 @@ export const axiosMasterMain = async (
       }
     } else {
       log("WARN", `API -> ${masterConfig.name || config.url} failed`, {
-        time: timer,
+        time: parseFloat(((Date.now() - startTime) / 1000).toFixed(5)),
         request: default_config,
         response: error,
       });
       return Promise.reject(error?.response);
     }
-  } finally {
-    clearInterval(interval);
   }
 };
 

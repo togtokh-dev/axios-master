@@ -115,11 +115,6 @@ const axiosMasterMain = (default_config, masterConfig) => __awaiter(void 0, void
     });
     const config = Object.assign({ timeout: masterConfig.timeout || 20000, httpsAgent: httpsAgent }, default_config);
     const startTime = Date.now();
-    let timer = 0;
-    const interval = setInterval(() => {
-        const elapsedTime = Date.now() - startTime;
-        timer = parseFloat((elapsedTime / 1000).toFixed(5));
-    }, 1);
     const log = (level, message, data) => {
         if (masterConfig.logger) {
             masterConfig.logger({
@@ -132,9 +127,9 @@ const axiosMasterMain = (default_config, masterConfig) => __awaiter(void 0, void
     const makeRequest = () => __awaiter(void 0, void 0, void 0, function* () {
         try {
             const response = yield (0, axios_1.default)(config);
-            clearInterval(interval);
+            const elapsedTime = parseFloat(((Date.now() - startTime) / 1000).toFixed(5));
             console.log("\x1b[32m", ": resolve");
-            console.log("\x1b[33m", `${masterConfig.name || config.url} => ${timer} s :`);
+            console.log("\x1b[33m", `${masterConfig.name || config.url} => ${elapsedTime} s :`);
             if (masterConfig.log) {
                 console.log(response);
             }
@@ -142,12 +137,12 @@ const axiosMasterMain = (default_config, masterConfig) => __awaiter(void 0, void
             return response;
         }
         catch (error) {
-            clearInterval(interval);
+            const elapsedTime = parseFloat(((Date.now() - startTime) / 1000).toFixed(5));
             if (masterConfig.log) {
                 console.log(error);
             }
             console.log("\x1b[35m", ": reject");
-            console.log("\x1b[33m", `${masterConfig.name || config.url} => ${timer} s :`);
+            console.log("\x1b[33m", `${masterConfig.name || config.url} => ${elapsedTime} s :`);
             if (error instanceof axios_1.AxiosError && error.response) {
                 console.log(error.response.data);
             }
@@ -158,7 +153,7 @@ const axiosMasterMain = (default_config, masterConfig) => __awaiter(void 0, void
     try {
         const response = yield makeRequest();
         log("INFO", `API -> ${masterConfig.name || config.url}`, {
-            time: timer,
+            time: parseFloat(((Date.now() - startTime) / 1000).toFixed(5)),
             request: default_config,
             response: response.data,
         });
@@ -175,7 +170,7 @@ const axiosMasterMain = (default_config, masterConfig) => __awaiter(void 0, void
                 }
                 const retryResponse = yield makeRequest();
                 log("INFO", `API -> ${masterConfig.name || config.url}`, {
-                    time: timer,
+                    time: parseFloat(((Date.now() - startTime) / 1000).toFixed(5)),
                     request: default_config,
                     response: retryResponse.data,
                 });
@@ -183,7 +178,7 @@ const axiosMasterMain = (default_config, masterConfig) => __awaiter(void 0, void
             }
             catch (retryError) {
                 log("WARN", `Retry API -> ${masterConfig.name || config.url} failed`, {
-                    time: timer,
+                    time: parseFloat(((Date.now() - startTime) / 1000).toFixed(5)),
                     request: default_config,
                     response: retryError,
                 });
@@ -192,15 +187,12 @@ const axiosMasterMain = (default_config, masterConfig) => __awaiter(void 0, void
         }
         else {
             log("WARN", `API -> ${masterConfig.name || config.url} failed`, {
-                time: timer,
+                time: parseFloat(((Date.now() - startTime) / 1000).toFixed(5)),
                 request: default_config,
                 response: error,
             });
             return Promise.reject(error === null || error === void 0 ? void 0 : error.response);
         }
-    }
-    finally {
-        clearInterval(interval);
     }
 });
 exports.axiosMasterMain = axiosMasterMain;
