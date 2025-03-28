@@ -1,161 +1,30 @@
 import axios, { AxiosRequestConfig, AxiosResponse, AxiosError } from "axios";
 import * as https from "https";
+type LogLevel = "DEBUG" | "INFO" | "WARN" | "ERROR" | "CRITICAL" | "TRACE";
+type loggerJson = {
+  time: number;
+  request: AxiosRequestConfig | any;
+  response: AxiosResponse | any;
+  responseBody: JSON | any;
+  statusCode: number | string;
+};
 interface MasterConfig {
   name?: string;
   log?: boolean;
   timeout?: number;
   logger?: (data: {
-    log_levels:
-      | "DEBUG"
-      | "INFO"
-      | "WARN"
-      | "ERROR"
-      | "CRITICAL"
-      | "TRACE"
-      | string;
+    log_levels: LogLevel;
     message: string;
-    json: Object;
+    json: loggerJson;
   }) => void;
   shouldRetry?: boolean;
   shouldRetryStatus?: number[];
   retryFunction?: () => Promise<string>;
 }
-export const axiosMaster = async (
-  name?: string | number,
-  log?: boolean,
-  default_config?: any,
-  time?: number | string
-) => {
-  const httpsAgent = new https.Agent({
-    rejectUnauthorized: false,
-  });
-  const config: AxiosRequestConfig = {
-    ...{
-      timeout: time ? time : 20 * 1000,
-      httpsAgent: httpsAgent,
-    },
-    ...default_config,
-  };
-
-  const startTime = Date.now();
-  let timer: any = 0;
-  const interval = setInterval(function () {
-    const elapsedTime = Date.now() - startTime;
-    timer = (elapsedTime / 1000).toFixed(5);
-  }, 1);
-  try {
-    const response: any = await axios(config);
-    clearInterval(interval);
-    console.log("\x1b[32m", ": resolve");
-    console.log("\x1b[33m", `${name ? name : config.url} => ${timer} s :`);
-    if (log) {
-      console.log(response?.data);
-    }
-    console.log("\x1b[32m", ": resolve");
-    return Promise.resolve(response?.data);
-  } catch (error) {
-    clearInterval(interval);
-    console.log("\x1b[35m", ": reject");
-    console.log("\x1b[33m", `${name ? name : config.url} => ${timer} s :`);
-    console.log(error?.response?.data);
-    console.log("\x1b[35m", ": reject");
-    return Promise.reject(error?.response?.data);
-  }
-};
-export const axiosMasterLogger = async (
-  default_config: AxiosRequestConfig,
-  masterConfig: {
-    name?: string;
-    log?: boolean;
-    timeout?: number;
-    logger?: (data: {
-      log_levels:
-        | string
-        | "DEBUG"
-        | "INFO"
-        | "WARN"
-        | "ERROR"
-        | "CRITICAL"
-        | "TRACE";
-      message: string;
-      json: Object;
-    }) => void;
-  }
-) => {
-  const httpsAgent = new https.Agent({
-    rejectUnauthorized: false,
-  });
-  const config: AxiosRequestConfig = {
-    ...{
-      timeout: masterConfig.timeout ? masterConfig.timeout : 20 * 1000,
-      httpsAgent: httpsAgent,
-    },
-    ...default_config,
-  };
-  const startTime = Date.now();
-  let timer: number | string = 0;
-  const interval = setInterval(function () {
-    const elapsedTime = Date.now() - startTime;
-    timer = (elapsedTime / 1000).toFixed(5);
-  }, 1);
-  let response_log = {};
-  let response_type:
-    | string
-    | "DEBUG"
-    | "INFO"
-    | "WARN"
-    | "ERROR"
-    | "CRITICAL"
-    | "TRACE" = "INFO";
-  try {
-    const response = await axios(config);
-    clearInterval(interval);
-    console.log("\x1b[32m", ": resolve");
-    console.log(
-      "\x1b[33m",
-      `${masterConfig.name ? masterConfig.name : config.url} => ${timer} s :`
-    );
-    if (masterConfig.log) {
-      console.log(response);
-    }
-    console.log("\x1b[32m", ": resolve");
-    response_log = response?.data;
-    return Promise.resolve(response?.data);
-  } catch (error) {
-    clearInterval(interval);
-    if (masterConfig.log) {
-      console.log(error);
-    }
-    response_log = error;
-    response_type = "WARN";
-    console.log("\x1b[35m", ": reject");
-    console.log(
-      "\x1b[33m",
-      `${masterConfig.name ? masterConfig.name : config.url} => ${timer} s :`
-    );
-    console.log(error?.response?.data);
-    console.log("\x1b[35m", ": reject");
-    return Promise.reject(error?.response?.data);
-  } finally {
-    try {
-      masterConfig?.logger({
-        log_levels: "WARN",
-        message: `API -> ${masterConfig.name ? masterConfig.name : config.url}`,
-        json: {
-          time: timer,
-          request: default_config,
-          response: response_log,
-        },
-      });
-    } catch (error) {
-      console.log(error);
-    }
-  }
-};
 
 export const axiosMasterMain = async (
   default_config: AxiosRequestConfig,
-  masterConfig: MasterConfig
+  masterConfig: MasterConfig,
 ): Promise<AxiosResponse | any> => {
   const httpsAgent = new https.Agent({
     rejectUnauthorized: false,
@@ -168,7 +37,7 @@ export const axiosMasterMain = async (
 
   const startTime = Date.now();
 
-  const log = (level: string, message: string, data: Object) => {
+  const log = (level: LogLevel, message: string, data: loggerJson) => {
     if (masterConfig.logger) {
       masterConfig.logger({
         log_levels: level,
@@ -182,12 +51,12 @@ export const axiosMasterMain = async (
     try {
       const response = await axios(config);
       const elapsedTime = parseFloat(
-        ((Date.now() - startTime) / 1000).toFixed(5)
+        ((Date.now() - startTime) / 1000).toFixed(5),
       );
       console.log("\x1b[32m", ": resolve");
       console.log(
         "\x1b[33m",
-        `${masterConfig.name || config.url} => ${elapsedTime} s :`
+        `${masterConfig.name || config.url} => ${elapsedTime} s :`,
       );
       if (masterConfig.log) {
         console.log(response);
@@ -196,7 +65,7 @@ export const axiosMasterMain = async (
       return response;
     } catch (error) {
       const elapsedTime = parseFloat(
-        ((Date.now() - startTime) / 1000).toFixed(5)
+        ((Date.now() - startTime) / 1000).toFixed(5),
       );
       if (masterConfig.log) {
         console.log(error);
@@ -204,7 +73,7 @@ export const axiosMasterMain = async (
       console.log("\x1b[35m", ": reject");
       console.log(
         "\x1b[33m",
-        `${masterConfig.name || config.url} => ${elapsedTime} s :`
+        `${masterConfig.name || config.url} => ${elapsedTime} s :`,
       );
       if (error instanceof AxiosError && error.response) {
         console.log(error.response.data);
@@ -220,6 +89,8 @@ export const axiosMasterMain = async (
       time: parseFloat(((Date.now() - startTime) / 1000).toFixed(5)),
       request: default_config,
       response: response.data,
+      responseBody: response.data,
+      statusCode: response.status,
     });
     return response.data;
   } catch (error) {
@@ -238,6 +109,8 @@ export const axiosMasterMain = async (
           time: parseFloat(((Date.now() - startTime) / 1000).toFixed(5)),
           request: default_config,
           response: retryResponse.data,
+          responseBody: retryResponse.data,
+          statusCode: retryResponse.status,
         });
         return retryResponse.data;
       } catch (retryError) {
@@ -245,6 +118,8 @@ export const axiosMasterMain = async (
           time: parseFloat(((Date.now() - startTime) / 1000).toFixed(5)),
           request: default_config,
           response: retryError,
+          responseBody: retryError.data,
+          statusCode: retryError.status,
         });
         return Promise.reject(retryError?.response?.data);
       }
@@ -253,10 +128,12 @@ export const axiosMasterMain = async (
         time: parseFloat(((Date.now() - startTime) / 1000).toFixed(5)),
         request: default_config,
         response: error,
+        responseBody: error.data,
+        statusCode: error.status,
       });
       return Promise.reject(error?.response);
     }
   }
 };
-
-export default axiosMaster;
+export const axiosMasterLogger = axiosMasterMain;
+export default axiosMasterMain;

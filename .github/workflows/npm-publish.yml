@@ -1,0 +1,63 @@
+name: Publish to NPM
+
+on:
+  push:
+    branches:
+      - main # Trigger on pushes to the main branch
+
+jobs:
+  publish:
+    name: Publish NPM Package
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: 18 # Specify the Node.js version
+          registry-url: https://registry.npmjs.org/
+
+      - name: Check NPM Token
+        env:
+          NPM_TOKEN: ${{ secrets.NPM_TOKEN }}
+        run: |
+          if [ -z "$NPM_TOKEN" ]; then
+            echo "NPM_TOKEN is not set"
+            exit 1
+          else
+            echo "NPM_TOKEN is set"
+          fi
+
+      - name: Log Sanitized NPM Token
+        env:
+          NPM_TOKEN: ${{ secrets.NPM_TOKEN }}
+        run: |
+          echo "NPM_TOKEN starts with: ${NPM_TOKEN:0:5}*****"
+
+      - name: Authenticate with NPM
+        env:
+          NPM_TOKEN: ${{ secrets.NPM_TOKEN }}
+        run: echo "//registry.npmjs.org/:_authToken=${NPM_TOKEN}" > ~/.npmrc
+
+      - name: Debug .npmrc
+        run: cat ~/.npmrc
+
+      - name: Install dependencies
+        run: npm install
+
+      - name: Build the package
+        run: npm run build # Replace with your build command if needed
+
+      - name: Publish the package
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+        run: npm publish --loglevel verbose
+
+      - name: Cleanup
+        if: always()
+        run: |
+          echo "Cleaning up sensitive files"
+          rm -f ~/.npmrc

@@ -1,27 +1,25 @@
 import { AxiosRequestConfig, AxiosResponse } from "axios";
+type LogLevel = "DEBUG" | "INFO" | "WARN" | "ERROR" | "CRITICAL" | "TRACE";
+type loggerJson = {
+    time: number;
+    request: AxiosRequestConfig | any;
+    response: AxiosResponse | any;
+    responseBody: JSON | any;
+    statusCode: number | string;
+};
 interface MasterConfig {
     name?: string;
     log?: boolean;
     timeout?: number;
     logger?: (data: {
-        log_levels: "DEBUG" | "INFO" | "WARN" | "ERROR" | "CRITICAL" | "TRACE" | string;
+        log_levels: LogLevel;
         message: string;
-        json: Object;
+        json: loggerJson;
     }) => void;
     shouldRetry?: boolean;
     shouldRetryStatus?: number[];
     retryFunction?: () => Promise<string>;
 }
-export declare const axiosMaster: (name?: string | number, log?: boolean, default_config?: any, time?: number | string) => Promise<any>;
-export declare const axiosMasterLogger: (default_config: AxiosRequestConfig, masterConfig: {
-    name?: string;
-    log?: boolean;
-    timeout?: number;
-    logger?: (data: {
-        log_levels: string | "DEBUG" | "INFO" | "WARN" | "ERROR" | "CRITICAL" | "TRACE";
-        message: string;
-        json: Object;
-    }) => void;
-}) => Promise<any>;
 export declare const axiosMasterMain: (default_config: AxiosRequestConfig, masterConfig: MasterConfig) => Promise<AxiosResponse | any>;
-export default axiosMaster;
+export declare const axiosMasterLogger: (default_config: AxiosRequestConfig, masterConfig: MasterConfig) => Promise<AxiosResponse | any>;
+export default axiosMasterMain;
