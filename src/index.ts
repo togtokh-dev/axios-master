@@ -117,21 +117,21 @@ export const axiosMasterMain = async (
         log("WARN", `Retry API -> ${masterConfig.name || config.url} failed`, {
           time: parseFloat(((Date.now() - startTime) / 1000).toFixed(5)),
           request: default_config,
-          response: retryError,
-          responseBody: retryError.data,
+          response: retryError.response,
+          responseBody: retryError.response.data,
           statusCode: retryError.status,
         });
-        return Promise.reject(retryError?.response?.data);
+        return Promise.reject(retryError.response);
       }
     } else {
       log("WARN", `API -> ${masterConfig.name || config.url} failed`, {
         time: parseFloat(((Date.now() - startTime) / 1000).toFixed(5)),
         request: default_config,
-        response: error,
-        responseBody: error.data,
+        response: error.response,
+        responseBody: error.response.data,
         statusCode: error.status,
       });
-      return Promise.reject(error?.response);
+      return Promise.reject(error.response);
     }
   }
 };
