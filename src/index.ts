@@ -70,13 +70,19 @@ export const axiosMasterMain = async (
       if (masterConfig.log) {
         console.log(error);
       }
+      const isTimeout =
+        axios.isAxiosError(error) &&
+        (error.code === "ECONNABORTED" || error.code === "ETIMEDOUT");
+      if (isTimeout) {
+        console.log("\x1b[31m", "⚠️ Request timed out.");
+      }
       console.log("\x1b[35m", ": reject");
       console.log(
         "\x1b[33m",
         `${masterConfig.name || config.url} => ${elapsedTime} s :`,
       );
       if (error instanceof AxiosError && error.response) {
-        console.log(error.response.data);
+        console.log(error.response?.data);
       }
       console.log("\x1b[35m", ": reject");
       throw error;
@@ -94,6 +100,9 @@ export const axiosMasterMain = async (
     });
     return response.data;
   } catch (error) {
+    const isTimeout =
+      axios.isAxiosError(error) &&
+      (error.code === "ECONNABORTED" || error.code === "ETIMEDOUT");
     if (
       error instanceof AxiosError &&
       masterConfig.shouldRetryStatus?.includes(error.response?.status) &&
@@ -108,30 +117,34 @@ export const axiosMasterMain = async (
         log("INFO", `API -> ${masterConfig.name || config.url}`, {
           time: parseFloat(((Date.now() - startTime) / 1000).toFixed(5)),
           request: default_config,
-          response: retryResponse.data,
-          responseBody: retryResponse.data,
-          statusCode: retryResponse.status,
+          response: retryResponse.data || null,
+          responseBody: isTimeout ? error.code : retryResponse.data,
+          statusCode: retryResponse.status || null,
         });
         return retryResponse.data;
       } catch (retryError) {
+        const isTimeout =
+          axios.isAxiosError(retryError) &&
+          (retryError.code === "ECONNABORTED" ||
+            retryError.code === "ETIMEDOUT");
         log("WARN", `Retry API -> ${masterConfig.name || config.url} failed`, {
           time: parseFloat(((Date.now() - startTime) / 1000).toFixed(5)),
           request: default_config,
-          response: retryError.response,
-          responseBody: retryError.response.data,
-          statusCode: retryError.status,
+          response: retryError.response || null,
+          responseBody: isTimeout ? retryError.code : retryError.response.data,
+          statusCode: retryError.status || null,
         });
-        return Promise.reject(retryError.response);
+        return Promise.reject(isTimeout ? retryError : retryError.response);
       }
     } else {
       log("WARN", `API -> ${masterConfig.name || config.url} failed`, {
         time: parseFloat(((Date.now() - startTime) / 1000).toFixed(5)),
         request: default_config,
-        response: error.response,
-        responseBody: error.response.data,
-        statusCode: error.status,
+        response: error.response || null,
+        responseBody: isTimeout ? error.code : error.response.data,
+        statusCode: error.status || null,
       });
-      return Promise.reject(error.response);
+      return Promise.reject(isTimeout ? error : error.response);
     }
   }
 };
