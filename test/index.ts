@@ -1,5 +1,5 @@
-import axiosMaster, { axiosMasterMain } from "../src";
-import axios, { AxiosResponse } from "axios";
+import axiosMaster, { axiosMasterMain, AxiosMasterError } from "../src";
+import axios, { AxiosError, AxiosResponse } from "axios";
 type ApiResponse<T> = {
   success: boolean;
   data: T;
@@ -58,16 +58,16 @@ export const callExample = async (
       data: null,
     };
   } catch (error) {
-    const axiosError = error as AxiosResponse<ApiResponse<null>>;
+    const axiosError = error as AxiosError<{}>;
     console.log(
       "axiosError.data",
-      axiosError.data,
-      axiosError.status,
-      axiosError.statusText,
+      axiosError.response,
+      axiosError.response?.status,
+      axiosError.response?.statusText,
     );
     return {
       success: false,
-      message: axiosError?.data?.data || "An error occurred.",
+      message: axiosError?.code || "An error occurred.",
       data: null,
     };
   }
