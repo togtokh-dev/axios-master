@@ -1,4 +1,8 @@
-import axiosMaster, { axiosMasterMain, AxiosMasterError } from "../src";
+import axiosMaster, {
+  axiosMasterMain,
+  AxiosMasterError,
+  axiosMasterLogger,
+} from "../src";
 import axios, { AxiosError, AxiosResponse } from "axios";
 type ApiResponse<T> = {
   success: boolean;
@@ -16,7 +20,7 @@ export const callExample = async (
   data: any;
 }> => {
   try {
-    const res: ApiResponse<{}> = await axiosMasterMain(
+    const res: ApiResponse<{}> = await axiosMasterLogger(
       {
         method: "GET",
         url: `${API_HOST}/login`,
