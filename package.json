@@ -1,6 +1,6 @@
 {
   "name": "axios-master",
-  "version": "2.0.4",
+  "version": "2.0.5",
   "description": "Axios wrapper for advanced response time logging, retries, and token refresh.",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",

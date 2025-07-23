@@ -8,15 +8,16 @@ type loggerJson = {
   responseBody: JSON | any;
   statusCode: number | string;
 };
+export type AxiosMasterLoggerType = {
+  log_levels: LogLevel;
+  message: string;
+  json: loggerJson;
+};
 interface MasterConfig {
   name?: string;
   log?: boolean;
   timeout?: number;
-  logger?: (data: {
-    log_levels: LogLevel;
-    message: string;
-    json: loggerJson;
-  }) => void;
+  logger?: (data: AxiosMasterLoggerType) => void;
   shouldRetry?: boolean;
   shouldRetryStatus?: number[];
   retryFunction?: () => Promise<string>;
