@@ -22,7 +22,7 @@ interface MasterConfig {
   shouldRetryStatus?: number[];
   retryFunction?: () => Promise<string>;
 }
-export type AxiosMasterError<T, D> = AxiosError;
+export type AxiosMasterError<T = unknown, D = any> = AxiosError;
 export const axiosMasterMain = async (
   default_config: AxiosRequestConfig,
   masterConfig: MasterConfig,
