@@ -1,7 +1,7 @@
 import axiosMaster, {
   axiosMasterMain,
   AxiosMasterError,
-  axiosMasterLogger,
+  axiosMasterLogger
 } from "../src";
 import axios, { AxiosError, AxiosResponse } from "axios";
 type ApiResponse<T> = {
@@ -13,7 +13,7 @@ const API_PASSWORD = "xxxxxxxxxxxxxxxxx";
 const API_USERNAME = "xxxxxxxxxxxxxxxxx";
 
 export const callExample = async (
-  id: string,
+  id: string
 ): Promise<{
   success: boolean;
   message: string;
@@ -26,18 +26,15 @@ export const callExample = async (
         url: `${API_HOST}/login`,
         auth: {
           username: API_PASSWORD,
-          password: API_USERNAME,
+          password: API_USERNAME
         },
         headers: {
-          "Content-Type": "application/json",
-          Authorization: `Basic ${Buffer.from(
-            `${API_PASSWORD}:${API_USERNAME}`,
-          ).toString("base64")}`,
+          "Content-Type": "application/json"
         },
         params: {
           searchKey: "id",
-          searchValue: id,
-        },
+          searchValue: id
+        }
       },
       {
         name: "GER LOGIN",
@@ -45,21 +42,21 @@ export const callExample = async (
         logger(data) {
           console.log(data.json);
           // console.log(data.json.response);
-        },
-      },
+        }
+      }
     );
     if (res?.success) {
       return {
         success: true,
         message: "Амжилттай.",
-        data: res.data,
+        data: res.data
       };
     }
 
     return {
       success: false,
       message: "Амжилтгүй.",
-      data: null,
+      data: null
     };
   } catch (error) {
     const axiosError = error as AxiosError<{}>;
@@ -67,12 +64,12 @@ export const callExample = async (
       "axiosError.data",
       axiosError.response,
       axiosError.response?.status,
-      axiosError.response?.statusText,
+      axiosError.response?.statusText
     );
     return {
       success: false,
       message: axiosError?.code || "An error occurred.",
-      data: null,
+      data: null
     };
   }
 };
