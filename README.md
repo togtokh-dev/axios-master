@@ -105,13 +105,66 @@ const getNewToken = async (): Promise<string> => {
 
 ---
 
-## 🧪 Function Signature
+## 🧪 Exports & Function Signatures
+
+The package exports two functions. Both share the same signature and behaviour; they differ only in what they reject with on failure:
 
 ```ts
+import axiosMaster, {
+  axiosMasterMain,
+  axiosMasterLogger,
+} from "axios-master";
+
+// default export === axiosMasterMain
 axiosMasterMain(
-  default_config: AxiosRequestConfig,
-  masterConfig: MasterConfig
-): Promise<any>
+  request: AxiosMasterRequest,
+  masterConfig: MasterConfig,
+): Promise<any>; // rejects with `error.response` (or the error on timeout)
+
+axiosMasterLogger(
+  request: AxiosMasterRequest,
+  masterConfig: MasterConfig,
+): Promise<any>; // rejects with the full AxiosError
+```
+
+On success both resolve with `response.data` (not the full Axios response).
+
+### `AxiosMasterRequest`
+
+The request argument is either a plain `AxiosRequestConfig` **or** a factory
+function that returns one. Passing a factory is recommended for requests that
+carry a stream (e.g. `FormData`), because the config is rebuilt on each retry:
+
+```ts
+type AxiosMasterRequest =
+  | AxiosRequestConfig
+  | (() => AxiosRequestConfig | Promise<AxiosRequestConfig>);
+```
+
+```ts
+import axiosMaster from "axios-master";
+
+await axiosMaster(
+  () => ({
+    method: "POST",
+    url: "https://api.example.com/upload",
+    data: buildFormData(), // fresh stream per attempt
+  }),
+  { name: "Upload", shouldRetry: true, shouldRetryStatus: [401], retryFunction: getNewToken },
+);
+```
+
+> On retry, if `retryFunction` returns a non-empty string it is applied as a
+> `Bearer` token on the `Authorization` header of the rebuilt request.
+
+### TypeScript types
+
+```ts
+import type {
+  AxiosMasterRequest,
+  AxiosMasterLoggerType,
+  AxiosMasterError,
+} from "axios-master";
 ```
 
 ---
@@ -158,4 +211,4 @@ axiosMasterMain(
 
 ## 📃 License
 
-MIT License © [Buyantogtokh](https://togtokh.dev)
+ISC © [TOGTOKH.DEV](https://togtokh.dev)
